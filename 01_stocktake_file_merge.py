@@ -153,22 +153,24 @@ for file in csv_files:
     message = f'\n\n -> MERGING FILE \'{os.path.basename(file)}\'. DATA FORMAT:\n' # the message is printed and saved to a file
     logger.info(message)
     csv_data = fn_open_csv(file)
+    current_file = os.path.basename(file)
+    print(current_file)
 
     #-------------------------------------------------------------------------------------------------------
-    content1 = [(line + [os.path.basename(file)]) for line in csv_data if len(line) == 2]
+    content1 = [(line + [current_file]) for line in csv_data if len(line) == 2]
 
     for i in range(2):
         message = '    ' + str(content1[i][:-1])
         logger.info(message)
     #-------------------------------------------------------------------------------------------------------
-    content2 = [(line + [os.path.basename(file)]) for line in csv_data if len(line) == 3]
+    content2 = [(line + [current_file]) for line in csv_data if len(line) == 3]
 
     logger.info('')
     for i in range(2):
         message = '    ' + str(content2[i][:-1])
         logger.info(message)
     #-------------------------------------------------------------------------------------------------------
-    content3 = [(line + [os.path.basename(file)]) for line in csv_data if len(line) == 5]
+    content3 = [(line + [current_file]) for line in csv_data if len(line) == 5]
 
     logger.info('')
     for i in range(2):
