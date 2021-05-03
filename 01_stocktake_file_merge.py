@@ -154,7 +154,6 @@ for file in csv_files:
     logger.info(message)
     csv_data = fn_open_csv(file)
     current_file = os.path.basename(file)
-    print(current_file)
 
     #-------------------------------------------------------------------------------------------------------
     content1 = [(line + [current_file]) for line in csv_data if len(line) == 2]
