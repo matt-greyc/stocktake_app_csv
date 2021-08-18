@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os, csv, logging
+import json
 
 
 #----------------------------------------------------------------------------------------
@@ -166,6 +167,9 @@ for item in items_data:
         items_dict[item_number] = {'title': title, 'blocked': blocked, 'unit_cost': unit_cost} # we add the item to items_dict, item_number is the key
 
 del items_data
+
+with open('items.json', 'w') as file:
+    json.dump(items_dict, file, indent=2)
 #-------------------------------------------------------------------------------------------------------------------------
 print(len(items_dict))
 
@@ -193,6 +197,9 @@ for barcode in barcodes_data:
         barcodes_dict[barcode_number] = item_number  # we add the barcode to barcodes_dict
 
 del barcodes_data
+
+with open('barcodes.json', 'w') as file:
+    json.dump(barcodes_dict, file, indent=2)
 #-------------------------------------------------------------------------------------------------------------------------
 print(len(barcodes_dict))
 
@@ -203,27 +210,57 @@ data_file = 'item_by_total_qty_by_location_merged.csv'
 data_no_headers = fn_open_csv(data_file)[1:]
 
 # data format:
-# Item Number	Location	Total QTY in Location	File Name
-# 929650891	    33014	    34	                    scan01.csv
+# Item Number	Location	Total QTY in Location	  File Name
+# 929650891	    33014	    34	                      scan01.csv
 
 new_headers = ['Scanned No', 'Item No', 'Title', 'Location', 'Quantity', 'Blocked', 'Unit Cost', 'Filename']
 
 identified_items = []
+unidentified_items = []
 unknowns = []
 blocked_items = []
 unknown = 'UNKNOWN'
 
+
+# -- STEP 1: CHECK IF SCANNED ITEM NUMBER CAN BE FOUND IN NAV ITEMS
 for scanned_item in data_no_headers:
     scanned_item_number = fn_lowercase_strip(scanned_item[0])
     print(scanned_item_number, scanned_item)
 
+    try:
+        items_dict[scanned_item_number]
+        item_number = scanned_item_number
+        title = items_dict[scanned_item_number]['title']
+        location = fn_lowercase_strip(scanned_item[1])
+        quantity = fn_lowercase_strip(scanned_item[2])
+        blocked = items_dict[scanned_item_number]['blocked']
+        unit_cost = items_dict[scanned_item_number]['unit_cost']
+        filename = fn_lowercase_strip(scanned_item[3])
+
+        item_to_add = [scanned_item_number, item_number, title, location, quantity, blocked, unit_cost, filename]
+
+        if blocked.lower() == 'false':
+            identified_items.append(item_to_add)
+        else:
+            blocked_items.append(item_to_add)
+
+        print(item_to_add)
+
+    except:
+        unidentified_items.append(scanned_item)
+
+# -- STEP 2: IF SCANNED NO WASN'T FOUND IN ITEMS WE CHECK IF IT CAN BE FOUND IN NAV BARCODES
+unknowns_2 = unknowns[:]
+unknowns = []
+
+    
 
 
 print('original data:', len(data_no_headers))
 print('identified_items:', len(identified_items))
-print('unknowns:', len(unknowns))
+print('unidentified_items:', len(unidentified_items))
 print('blocked_items:', len(blocked_items))
-check = len(identified_items) + len(unknowns) + len(blocked_items)
+check = len(identified_items) + len(unidentified_items) + len(blocked_items)
 print('check:', check, check == len(data_no_headers))
 # # # ------------------    open stocktake file with items to match to NAV
 
