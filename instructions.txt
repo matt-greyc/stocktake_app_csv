@@ -1,0 +1,6 @@
+!!! don't open csv files by double clicking, use DATA->FROM TEXT option !!!
+if you double click excel will convert text to general type for item numbers
+to make small changes you can also use Notepad and open csv files as text
+
+
+
