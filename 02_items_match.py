@@ -171,7 +171,7 @@ del items_data
 with open('items.json', 'w') as file:
     json.dump(items_dict, file, indent=2)
 #-------------------------------------------------------------------------------------------------------------------------
-print(len(items_dict))
+
 
 # ----------- 2. we create a dictionary of barcodes from a file exported from NAV -------------------------------------------
 barcodes_file = 'nav_barcodes.csv'
@@ -201,7 +201,6 @@ del barcodes_data
 with open('barcodes.json', 'w') as file:
     json.dump(barcodes_dict, file, indent=2)
 #-------------------------------------------------------------------------------------------------------------------------
-print(len(barcodes_dict))
 
 
 # ----------- 3. we match scannned item numbers to items exported from NAV -------------------------------------------
