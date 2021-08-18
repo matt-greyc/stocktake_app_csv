@@ -1,5 +1,18 @@
 scans
 
 logs
+_test.py
+_test.log
+item_by_stocktake_count_by_date_and_time_merged.csv
+item_by_total_qty_by_location_merged.csv
+item_by_total_qty_merged.csv
+nav_items.csv
+nav_barcodes.csv
+item_by_total_qty_by_location_test.csv
+
+
+
+
+
 
 
