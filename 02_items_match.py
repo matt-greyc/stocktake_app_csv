@@ -205,6 +205,8 @@ with open('barcodes.json', 'w') as file:
 
 # ----------- 3. we match scannned item numbers to items exported from NAV -------------------------------------------
 data_file = 'item_by_total_qty_by_location_merged.csv'
+# data_file = 'item_by_total_qty_by_location_merged_test.csv'
+
 # data = fn_open_csv(data_file)#[1:]
 data_no_headers = fn_open_csv(data_file)[1:]
 
@@ -213,7 +215,6 @@ data_no_headers = fn_open_csv(data_file)[1:]
 # 929650891	    33014	    34	                      scan01.csv
 
 new_headers = ['Scanned No', 'Item No', 'Title', 'Location', 'Quantity', 'Blocked', 'Unit Cost', 'Filename']
-
 identified_items = []
 unidentified_items = []
 unknowns = []
@@ -222,45 +223,208 @@ unknown = 'UNKNOWN'
 
 
 # -- STEP 1: CHECK IF SCANNED ITEM NUMBER CAN BE FOUND IN NAV ITEMS
-for scanned_item in data_no_headers:
-    scanned_item_number = fn_lowercase_strip(scanned_item[0])
-    print(scanned_item_number, scanned_item)
 
-    try:
-        items_dict[scanned_item_number]
-        item_number = scanned_item_number
-        title = items_dict[scanned_item_number]['title']
-        location = fn_lowercase_strip(scanned_item[1])
-        quantity = fn_lowercase_strip(scanned_item[2])
-        blocked = items_dict[scanned_item_number]['blocked']
-        unit_cost = items_dict[scanned_item_number]['unit_cost']
-        filename = fn_lowercase_strip(scanned_item[3])
 
-        item_to_add = [scanned_item_number, item_number, title, location, quantity, blocked, unit_cost, filename]
 
-        if blocked.lower() == 'false':
-            identified_items.append(item_to_add)
-        else:
-            blocked_items.append(item_to_add)
+for item in data_no_headers:
 
-        print(item_to_add)
+    continue_loop = True
+    # logger.info(str(item))
+    scanned_item_number = fn_lowercase_strip(item[0])
+    item_number = fn_lowercase_strip(item[0])
+    location = fn_lowercase_strip(item[1])
+    quantity = fn_lowercase_strip(item[2])
+    filename = fn_lowercase_strip(item[3])
 
-    except:
-        unidentified_items.append(scanned_item)
+    loop_check = 0
 
-# -- STEP 2: IF SCANNED NO WASN'T FOUND IN ITEMS WE CHECK IF IT CAN BE FOUND IN NAV BARCODES
-unknowns_2 = unknowns[:]
-unknowns = []
+    while continue_loop:
+
+        loop_check += 1
+
+        if loop_check == 10: # check to avoid an infinite loop
+            item_to_add = [scanned_item_number, unknown, unknown, location, quantity, unknown, unknown, filename]
+            unknowns.append(item_to_add)
+            break
+
+        if loop_check <= 1:
+            log_message = f'\n\n >>> searching for item: {item_number}\n'
+            logger.info(log_message)
+        elif loop_check > 1:
+            log_message = f'     - searching for item: {item_number}'
+            logger.info(log_message)
+
+
+        # There only 2 options, item is either found or not found in items dict
+
+        try: # item is found, if item doesn't exist then program will jump to except block
+            items_dict[item_number]
+            log_message = f'     - item {item_number} found in NAV items'
+            logger.info(log_message)
+            # format -> [scanned_item_number, item_number, title, location, quantity, blocked, unit_cost, filename]
+            title = items_dict[item_number]['title']
+            blocked = items_dict[item_number]['blocked']
+            unit_cost = items_dict[item_number]['unit_cost']            
+
+            item_to_add = [scanned_item_number, item_number, title, location, quantity, blocked, unit_cost, filename]
+
+            if blocked.lower() == 'false' and 'blocked item' not in title.lower(): # item isn't blocked so it is saved to identified items
+                identified_items.append(item_to_add)
+                log_message = f'     - saving item {item_to_add[0:3]}'
+                logger.info(log_message)
+                continue_loop = False
+
+            else: # item is blocked, we try to extract new item number from the description
+                # descritption format -> 'BLOCKED ITEM USE  9781845962852'
+
+                log_message = f'     - item {item_number} is BLOCKED'
+                logger.info(log_message)
+
+                # blocked_items.append(item)
+                # continue_loop = False
+
+                try: # we try to extract new item number for the blockd item and check if it is found in items
+                    new_item_number = title.split()[-1]  # 'BLOCKED ITEM USE  9781845962852' -> '9781845962852' 
+                    new_item_number = fn_lowercase_strip(new_item_number)
+                    items_dict[new_item_number]  # if item doesn't exist we'll get a key error and jumt to except block
+
+                    if new_item_number != item_number: # extracted number can't be the same, it will create an infinite loop
+                        log_message = f'     - new item number found for the blocked item -> {new_item_number}'
+                        logger.info(log_message)
+                        item_number = new_item_number # we replace old item No with the new one and let the loop run again
+                        continue # we jump back to the beginning of the while loop
+                    else:
+                        blocked_items.append(item_to_add)
+                        continue_loop = False
+
+                except: # we can't extract new item number or it doesn't exist, we save it to blocked items to be checked manually
+                    blocked_items.append(item_to_add)
+                    continue_loop = False
+                    # log_message = f'  - new item number found for the blocked item -> {new_item_number}\n'
+                    # logger.info(log_message)
+         
+
+        except: # item wasn't found in items dict
+
+            log_message = f'     - item {item_number} NOT FOUND in NAV items'
+            logger.info(log_message)
+
+            try: # first we check if scanned number can be found in barcodes and if the barcode has assigned correct item number
+                new_item_number = barcodes_dict[item_number] # we check if scanned number exists in barcodes
+
+                log_message = f'     - item {item_number} found in NAV barcodes'
+                logger.info(log_message)
+
+                if new_item_number == item_number: # if barcode is the same as scanned number then item is unknown
+                    
+                    log_message = f'     - UNKNOWN ITEM. Item No: {item_number} the same as barcode No: {new_item_number} '
+                    logger.info(log_message)
+                   
+                    item_to_add = [scanned_item_number, unknown, unknown, location, quantity, unknown, unknown, filename]
+                    unknowns.append(item_to_add)
+                    continue_loop = False
+
+                else:
+                    item_number = new_item_number
+
+                    log_message = f'     - new item number found -> {new_item_number}'
+                    logger.info(log_message)
+
+                    continue
+
+            except:
+                log_message = f'     - item {item_number} NOT FOUND in NAV barcodes'
+                logger.info(log_message)
+                log_message = f'     - Saving UNKNOWN ITEM {item_number}'
+                logger.info(log_message)
+
+                item_to_add = [scanned_item_number, unknown, unknown, location, quantity, unknown, unknown, filename]
+                unknowns.append(item_to_add)
+                continue_loop = False
+
+
+        # break
+
+
+
+
+
+
+# for scanned_item in data_no_headers:
+#     scanned_item_number = fn_lowercase_strip(scanned_item[0])
+#     print(scanned_item_number, scanned_item)
+
+#     try:
+#         items_dict[scanned_item_number]
+#         item_number = scanned_item_number
+#         title = items_dict[scanned_item_number]['title']
+#         location = fn_lowercase_strip(scanned_item[1])
+#         quantity = fn_lowercase_strip(scanned_item[2])
+#         blocked = items_dict[scanned_item_number]['blocked']
+#         unit_cost = items_dict[scanned_item_number]['unit_cost']
+#         filename = fn_lowercase_strip(scanned_item[3])
+
+#         item_to_add = [scanned_item_number, item_number, title, location, quantity, blocked, unit_cost, filename]
+
+#         if blocked.lower() == 'false':
+#             identified_items.append(item_to_add)
+#         else:
+#             blocked_items.append(item_to_add)
+
+#         print(item_to_add)
+
+#     except:
+#         unidentified_items.append(scanned_item)
+
+# # -- STEP 2: IF SCANNED NO WASN'T FOUND IN ITEMS WE CHECK IF IT CAN BE FOUND IN NAV BARCODES
+# unidentified_items_2 = unidentified_items[:]
+# unidentified_items = []
+
+# for item in unidentified_items_2:
+#     print(item)
+
+#     try:
+#         scanned_item_number = item[0]
+#         new_item_number = barcodes_dict[scanned_item_number]
+
+#         try:
+#             items_dict[new_item_number]
+#             item_number = new_item_number
+#             title = items_dict[new_item_number]['title']
+#             location = fn_lowercase_strip(item[1])
+#             quantity = fn_lowercase_strip(item[2])
+#             blocked = items_dict[new_item_number]['blocked']
+#             unit_cost = items_dict[new_item_number]['unit_cost']
+#             filename = fn_lowercase_strip(item[3])
+
+#             item_to_add = [scanned_item_number, new_item_number, title, location, quantity, blocked, unit_cost, filename]
+
+#             if blocked.lower() == 'false':
+#                 identified_items.append(item_to_add)
+#             else:
+#                 blocked_items.append(item_to_add)
+
+#             print(item_to_add)  
+
+#         except:
+#             unknowns.append(item)
+
+#     except:
+#         unknowns.append(item)
 
     
 
 
 print('original data:', len(data_no_headers))
 print('identified_items:', len(identified_items))
-print('unidentified_items:', len(unidentified_items))
+print('unknown_items:', len(unknowns))
 print('blocked_items:', len(blocked_items))
-check = len(identified_items) + len(unidentified_items) + len(blocked_items)
+check = len(identified_items) + len(unknowns) + len(blocked_items)
 print('check:', check, check == len(data_no_headers))
+
+fn_save_csv(unknowns, 'test_unknowns.csv')
+fn_save_csv(blocked_items, 'test_blocked_items.csv')
+fn_save_csv(identified_items, 'test_identified_items.csv')
 # # # ------------------    open stocktake file with items to match to NAV
 
 # # stocktake_file = 'item_by_total_qty_by_location_merged.csv'
