@@ -277,9 +277,6 @@ for item in data_no_headers:
                 log_message = f'     - item {item_number} is BLOCKED'
                 logger.info(log_message)
 
-                # blocked_items.append(item)
-                # continue_loop = False
-
                 try: # we try to extract new item number for the blockd item and check if it is found in items
                     new_item_number = title.split()[-1]  # 'BLOCKED ITEM USE  9781845962852' -> '9781845962852' 
                     new_item_number = fn_lowercase_strip(new_item_number)
@@ -366,4 +363,4 @@ print('\n original data:', len(data_no_headers))
 print(' final list:', len(final_list) - 1)
 print(' check:', len(data_no_headers) == len(final_list) - 1)
 
-input('PRESS ENTER TO EXIT...')
+input('\n >>> PRESS ENTER TO EXIT...')
