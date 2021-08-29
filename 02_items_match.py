@@ -205,9 +205,6 @@ del barcodes_data
 
 # ----------- 3. we match scannned item numbers to items exported from NAV -------------------------------------------
 data_file = 'item_by_total_qty_by_location_merged.csv'
-# data_file = 'item_by_total_qty_by_location_merged_test.csv'
-
-# data = fn_open_csv(data_file)#[1:]
 data_no_headers = fn_open_csv(data_file)[1:]
 
 # data format:
@@ -225,7 +222,6 @@ unknown = 'UNKNOWN'
 for item in data_no_headers:
 
     continue_loop = True
-    # logger.info(str(item))
     scanned_item_number = fn_lowercase_strip(item[0])
     item_number = fn_lowercase_strip(item[0])
     location = fn_lowercase_strip(item[1])
@@ -319,10 +315,8 @@ for item in data_no_headers:
 
                 else:
                     item_number = new_item_number
-
                     log_message = f'     - new item number found -> {new_item_number}'
                     logger.info(log_message)
-
                     continue
 
             except:
