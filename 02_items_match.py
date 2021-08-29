@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import os, csv, logging
-import json
+# import json
 
 
 #----------------------------------------------------------------------------------------
@@ -168,8 +168,8 @@ for item in items_data:
 
 del items_data
 
-with open('items.json', 'w') as file:
-    json.dump(items_dict, file, indent=2)
+# with open('items.json', 'w') as file:
+#     json.dump(items_dict, file, indent=2)
 #-------------------------------------------------------------------------------------------------------------------------
 
 
@@ -198,8 +198,8 @@ for barcode in barcodes_data:
 
 del barcodes_data
 
-with open('barcodes.json', 'w') as file:
-    json.dump(barcodes_dict, file, indent=2)
+# with open('barcodes.json', 'w') as file:
+#     json.dump(barcodes_dict, file, indent=2)
 #-------------------------------------------------------------------------------------------------------------------------
 
 
@@ -220,10 +220,6 @@ unidentified_items = []
 unknowns = []
 blocked_items = []
 unknown = 'UNKNOWN'
-
-
-# -- STEP 1: CHECK IF SCANNED ITEM NUMBER CAN BE FOUND IN NAV ITEMS
-
 
 
 for item in data_no_headers:
@@ -257,6 +253,7 @@ for item in data_no_headers:
 
         # There only 2 options, item is either found or not found in items dict
 
+        # -- STEP 1: CHECK IF SCANNED ITEM NUMBER CAN BE FOUND IN NAV ITEMS
         try: # item is found, if item doesn't exist then program will jump to except block
             items_dict[item_number]
             log_message = f'     - item {item_number} found in NAV items'
@@ -303,7 +300,6 @@ for item in data_no_headers:
                     # log_message = f'  - new item number found for the blocked item -> {new_item_number}\n'
                     # logger.info(log_message)
          
-
         except: # item wasn't found in items dict
 
             log_message = f'     - item {item_number} NOT FOUND in NAV items'
@@ -342,285 +338,32 @@ for item in data_no_headers:
                 unknowns.append(item_to_add)
                 continue_loop = False
 
-
-        # break
-
-
-
-
-
-
-# for scanned_item in data_no_headers:
-#     scanned_item_number = fn_lowercase_strip(scanned_item[0])
-#     print(scanned_item_number, scanned_item)
-
-#     try:
-#         items_dict[scanned_item_number]
-#         item_number = scanned_item_number
-#         title = items_dict[scanned_item_number]['title']
-#         location = fn_lowercase_strip(scanned_item[1])
-#         quantity = fn_lowercase_strip(scanned_item[2])
-#         blocked = items_dict[scanned_item_number]['blocked']
-#         unit_cost = items_dict[scanned_item_number]['unit_cost']
-#         filename = fn_lowercase_strip(scanned_item[3])
-
-#         item_to_add = [scanned_item_number, item_number, title, location, quantity, blocked, unit_cost, filename]
-
-#         if blocked.lower() == 'false':
-#             identified_items.append(item_to_add)
-#         else:
-#             blocked_items.append(item_to_add)
-
-#         print(item_to_add)
-
-#     except:
-#         unidentified_items.append(scanned_item)
-
-# # -- STEP 2: IF SCANNED NO WASN'T FOUND IN ITEMS WE CHECK IF IT CAN BE FOUND IN NAV BARCODES
-# unidentified_items_2 = unidentified_items[:]
-# unidentified_items = []
-
-# for item in unidentified_items_2:
-#     print(item)
-
-#     try:
-#         scanned_item_number = item[0]
-#         new_item_number = barcodes_dict[scanned_item_number]
-
-#         try:
-#             items_dict[new_item_number]
-#             item_number = new_item_number
-#             title = items_dict[new_item_number]['title']
-#             location = fn_lowercase_strip(item[1])
-#             quantity = fn_lowercase_strip(item[2])
-#             blocked = items_dict[new_item_number]['blocked']
-#             unit_cost = items_dict[new_item_number]['unit_cost']
-#             filename = fn_lowercase_strip(item[3])
-
-#             item_to_add = [scanned_item_number, new_item_number, title, location, quantity, blocked, unit_cost, filename]
-
-#             if blocked.lower() == 'false':
-#                 identified_items.append(item_to_add)
-#             else:
-#                 blocked_items.append(item_to_add)
-
-#             print(item_to_add)  
-
-#         except:
-#             unknowns.append(item)
-
-#     except:
-#         unknowns.append(item)
-
-    
-
-
-print('original data:', len(data_no_headers))
-print('identified_items:', len(identified_items))
-print('unknown_items:', len(unknowns))
-print('blocked_items:', len(blocked_items))
+   
+print('\n original data:', len(data_no_headers))
+print(' identified_items:', len(identified_items))
+print(' unknown_items:', len(unknowns))
+print(' blocked_items:', len(blocked_items))
 check = len(identified_items) + len(unknowns) + len(blocked_items)
-print('check:', check, check == len(data_no_headers))
-
-fn_save_csv(unknowns, 'test_unknowns.csv')
-fn_save_csv(blocked_items, 'test_blocked_items.csv')
-fn_save_csv(identified_items, 'test_identified_items.csv')
-# # # ------------------    open stocktake file with items to match to NAV
-
-# # stocktake_file = 'item_by_total_qty_by_location_merged.csv'
-# # # stocktake_file = 'item_by_total_qty_by_location_test.csv'
-# # scanned_items_data1 = fn_open_csv(stocktake_file)
-
-
-
-# # scanned_items = [line for line in scanned_items_data1 if len(line) == 4] # removing empty lines -> []
-# # scanned_items_without_headers = scanned_items[1:] # removing first line (headers)
-# # # ['9781929198832', '32073', '2', 'scan13.csv']
-
-# # # output file headers
-# # headers = ['Scanned Number', 'NAV Number', 'Title', 'Location', 'Quantity', 'Blocked', 'Unit Cost', 'File']
-# # final_item_list = [headers] # list of items that will be saved to csv file
-# # unknown_items = [headers] # list of unknown items that will be saved to csv file
-
-# # blocked_count = 0 # blocked items count
-
-# # print('\n')
-
-# # for item in scanned_items_without_headers: 
-# #     # scanned item -> [Item Number,	Location, Total QTY in Location, File Name]
-# #     # NAV item -> {item_number: {'title': title, 'blocked': blocked, 'unit_cost': unit cost}}
-# #     # headers -> ['Scanned Number', 'NAV Number', 'Title', 'Location', 'Quantity', 'Blocked', 'Unit Cost', 'File']
-
-# #     pal('\n --------------------------------------------------------------------------\n') # pal -> print and log
-
-# #     item_found = False
-# #     scanned_item_number = item[0].upper() # [Item Number, Location, Total QTY in Location, File Name]
-# #     nav_item_number = None
-# #     title = None
-# #     location = item[1] # [Item Number, Location, Total QTY in Location, File Name]
-# #     quantity = item[2] # [Item Number, Location, Total QTY in Location, File Name]
-# #     blocked = None
-# #     unit_cost = None
-# #     file_name = item[3] # [Item Number, Location, Total QTY in Location, File Name]
-
-# #     line_to_write = [scanned_item_number, nav_item_number, title, location, quantity, blocked, unit_cost, file_name]
-
-# #     # for z in zip(headers, line_to_write):
-# #     #     print(z)
-
-# #     # break
-
-# #     # -- STEP 1: CHECK IF SCANNED ITEM NUMBER CAN BE FOUND IN NAV ITEMS
-
-# #     if scanned_item_number not in items_dict_keys and fn_remove_zeros(scanned_item_number) in items_dict_keys:
-# #         scanned_item_number = fn_remove_zeros(scanned_item_number)
-
-# #     if scanned_item_number in items_dict_keys:
-
-# #         item_found = True
-# #         nav_item_number = scanned_item_number
-
-# #         pal(f' Scanned number {scanned_item_number} found in NAV items')
-# #         pal(f' Scanned item number: {scanned_item_number}')
-# #         pal(f'     NAV_item_number: {nav_item_number}')
-
-
-# #     elif scanned_item_number not in items_dict_keys:
-# #         pal(f' >>> Scanned number {scanned_item_number} NOT FOUND in NAV items')
-
-# #     # -- STEP 2: IF ITEM WASN'T FOUND IN THE 'ITEMS' FILE WE CHECK 'BARCODES' FILE
-# #     if item_found == False:
-# #         if scanned_item_number not in barcodes_dictionary.keys() and fn_remove_zeros(scanned_item_number) in barcodes_dictionary.keys():
-# #             scanned_item_number = fn_remove_zeros(scanned_item_number)
-
-# #     if item_found == False: # item not found yet
-
-# #         if scanned_item_number in barcodes_dictionary.keys(): # number found in barcodes
-
-# #             # we access barcodes dictionary to get item No. assigned to this barcode
-# #             item_number_assigned_to_the_barcode = barcodes_dictionary[scanned_item_number].upper()
-
-# #             pal(f' Scanned number {scanned_item_number} FOUND in NAV barcodes')
-# #             pal(f' NEW ITEM NUMBER: {item_number_assigned_to_the_barcode}')
-
-# #             # we have item No. assigned to the barcode so now we check if this number
-# #             # exists in the items file
-
-# #             if item_number_assigned_to_the_barcode in items_dictionary.keys(): # new number found in items
-
-# #                 item_found = True
-# #                 nav_item_number = item_number_assigned_to_the_barcode
-
-# #                 pal(f' NEW ITEM NUMBER {item_number_assigned_to_the_barcode} found in NAV items')
-# #                 pal(f' Scanned item number: {scanned_item_number}')
-# #                 pal(f'     NAV_item_number: {item_number_assigned_to_the_barcode}')
-
-# #             elif item_number_assigned_to_the_barcode in items_dictionary.keys(): # new number not found in items
-# #                 pal(f' >>> NEW ITEM NUMBER {item_number_assigned_to_the_barcode} NOT FOUND in NAV items')
-# #                 # this item is going to unknown items
-
-
-# #         elif scanned_item_number not in barcodes_dictionary.keys(): # number not found in barcodes
-# #             pal(f' >>> Scanned number {scanned_item_number} NOT FOUND in NAV barcodes')
-
-# #     # -- STEP 3: SCANNED NUMBER DOESN'T EXIST IN ITEMS OR BARCODES SO IT'S GOING TO UNKNOWN ITEMS
-
-# #     if item_found == False:
-# #         pal(f' >>> UNKNOWN ITEM: {scanned_item_number}')
-# #         # headers -> ['Scanned Number', 'NAV Number', 'Title', 'Location', 'Quantity', 'Blocked', 'Unit Cost', 'File']
-# #         unknown_item_to_append = [scanned_item_number, 'UNKNOWN', 'UNKNOWN ITEM', location,
-# #                                   quantity, 'FALSE', 'UNKNOWN', file_name]
-# #         final_item_list.append(unknown_item_to_append)
-# #         unknown_items.append(unknown_item_to_append)
-# #         continue
-
-# #     # -- STEP 4: WE'VE FOUND NAV ITEM NO. FOR THIS SCANNED NO., WE HAVE TO CHECK IF ITEM IS BLOCKED
-
-# #     blocked = items_dictionary[nav_item_number]['blocked']
-
-# #     if 'false' in blocked.lower():
-# #         blocked = False
-        
-# #         # headers
-# #         # ['Scanned Number', 'NAV Number', 'Title', 'Location', 'Quantity', 'Blocked', 'Unit Cost', 'File']
-# #         # {item_number: {'title': title, 'blocked': blocked, 'unit_cost': unit_cost}}  -> items dict
-
-# #         title = items_dictionary[nav_item_number]['title']
-# #         pal(f'  ITEM BLOCKED -> FALSE')
-# #         pal(f'  TITLE: {title}')
-# #         unit_cost = items_dictionary[nav_item_number]['unit_cost']
-# #         entry_to_append = [scanned_item_number, nav_item_number, title, location, quantity,
-# #                            'FALSE', unit_cost, file_name]
-# #         final_item_list.append(entry_to_append)
-
-# #     elif 'true' in blocked.lower():
-# #         blocked = True
-# #         title = items_dictionary[nav_item_number]['title']
-# #         pal(f' ITEM BLOCKED: TRUE -> TITLE: {title}')
-
-# #         # if item is blocked we check if we can extract new item No. from the description/title
-# #         # description -> BLOCKED ITEM USE 0232519307
-# #         new_isbn = [item for item in title.split()][-1] # split on whitespace and extract last item from the list
-# #         new_isbn = new_isbn.upper()
-        
-# #         # we check if new item No. can be found in NAV items
-# #         if new_isbn in items_dict_keys:
-# #             title = items_dictionary[new_isbn]['title']
-# #             pal(f' NEW ITEM NO. EXTRACTED: {new_isbn}')
-# #             pal(f' ITEM {new_isbn} FOUND IN NAV ITEMS: {title}')
-
-# #             # headers
-# #             # ['Scanned Number', 'NAV Number', 'Title', 'Location', 'Quantity', 'Blocked', 'Unit Cost', 'File']
-# #             # {item_number: {'title': title, 'blocked': blocked, 'unit_cost': unit_cost}}  -> items dict
-
-# #             unit_cost = items_dictionary[new_isbn]['unit_cost']
-# #             blocked = items_dictionary[new_isbn]['blocked']
-
-# #             if 'true' in blocked.lower():
-# #                 blocked = 'TRUE'
-# #             elif 'false' in blocked.lower():
-# #                 blocked = 'FALSE'
-
-# #             entry_to_append = [scanned_item_number, new_isbn, title, location, quantity,
-# #                            blocked, unit_cost, file_name]
-# #             final_item_list.append(entry_to_append)
-
-# #         elif new_isbn not in items_dict_keys:
-
-# #             pal(f' ITEM {new_isbn} NOT FOUND IN NAV ITEMS')
-
-# #             # headers
-# #             # ['Scanned Number', 'NAV Number', 'Title', 'Location', 'Quantity', 'Blocked', 'Unit Cost', 'File']
-# #             # {item_number: {'title': title, 'blocked': blocked, 'unit_cost': unit_cost}}  -> items dict
-
-# #             title = items_dictionary[nav_item_number]['title']
-# #             unit_cost = items_dictionary[nav_item_number]['unit_cost']
-# #             entry_to_append = [scanned_item_number, nav_item_number, title, location, quantity,
-# #                                'TRUE', unit_cost, file_name]
-# #             final_item_list.append(entry_to_append)
-
-# # pal('\n --------------------------------------------------------------------------\n')
-
-
-# # pal(f'\n initial list lines: {len(scanned_items)} \n final list lines: {len(final_item_list)}')
-# # pal(f'\n unknowns: {len(unknown_items)}')
-
-
-# # fn_save_csv(final_item_list, 'output_list_items_with_titles.csv')
-# # fn_save_csv(unknown_items, 'output_list_unknown_items.csv')
-
-# # with open(log_file_name, 'w') as file:
-# #     for line in log_data:
-# #         file.write(line)
-
-# # # print(barcodes_dictionary.keys())
-# # # print(type(barcodes_dictionary.keys()))
-
-# # input('\n')
-
-
-
-
-
-
-
+print(' check:', check, check == len(data_no_headers))
+
+if unknowns:
+    final_unknows_list = [new_headers]
+    final_unknows_list.extend(unknowns)
+    fn_save_csv(final_unknows_list, 'output_unknown_items.csv')
+
+if blocked:
+    final_blocked_items_list = [new_headers]
+    final_blocked_items_list.extend(blocked_items)
+    fn_save_csv(final_blocked_items_list, 'output_blocked_items.csv')
+
+final_list = [new_headers]   
+final_list.extend(unknowns)
+final_list.extend(blocked_items)
+final_list.extend(identified_items)
+fn_save_csv(final_list, 'output_matched_items.csv')
+
+print('\n original data:', len(data_no_headers))
+print(' final list:', len(final_list) - 1)
+print(' check:', len(data_no_headers) == len(final_list) - 1)
+
+input('PRESS ENTER TO EXIT...')
