@@ -320,6 +320,11 @@ for item in data_no_headers:
                     continue
 
             except:
+
+                if item_number[0] == '0':
+                    item_number = fn_remove_zeros(item_number)
+                    continue
+
                 log_message = f'     - item {item_number} NOT FOUND in NAV barcodes'
                 logger.info(log_message)
                 log_message = f'     - Saving UNKNOWN ITEM {item_number}'
