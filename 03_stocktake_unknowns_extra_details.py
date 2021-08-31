@@ -1,184 +1,238 @@
 
 #!/usr/bin/env python3
 
-# import os
-import csv
+import csv, os, logging
+
+
+#----------------------------------------------------------------------------------------
+def fn_create_log_file_name(): 
+    '''\n function fn_create_log_file_name() returns a log file name based on the name
+ of the script. Example: script new_function.py returns log file name new_function.log\n'''
+    # import os
+
+    file_name = os.path.basename(__file__) # name of the current script without path -> new_function.py
+    log_file_name = os.path.splitext(file_name)[0]  # os.path.splitext() is used to split the path name into a pair root and extension
+
+    return log_file_name + '.log'
+#----------------------------------------------------------------------------------------
 
 
 #-------------------------------------------------------------------------
-def fn_open_csv(data_file): 
+def fn_folder_exists_check(folder, f_path='.'):
+    '''\n function checks if folder already exists, if not it is created\n'''
+    from os import listdir, mkdir
+    from os.path import isdir
+
+    folder_content = listdir(f_path)
+    folders = [item for item in folder_content if isdir(f_path+'\\'+item)]  #  list of folders in the specified directory
+
+    if folder not in folders:
+        mkdir(f_path + '\\' + folder)
+#--------------------------------------------------------------------------------
+
+
+#------------------------------------- logger setup -----------------------------------
+fn_folder_exists_check('logs')  # 'logs' folder is created if it doesn't exist already
+log_file_name = fn_create_log_file_name()
+log_file_folder = '.\\logs\\'
+log_file_path = log_file_folder + log_file_name
+
+# logging setup 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter('%(message)s')
+
+# file handler saves log messages in the specified file
+file_handler = logging.FileHandler(log_file_path, 'w')
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+# stream handler sends log messages to the console
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+#------------------------------------- end of logger setup -------------------------------------------
+
+
+#-------------------------------------------------------------------------
+def fn_open_csv(file): 
     '''opens a csv file and returns the content as a list'''
     try:
-        with open(data_file, 'r') as file:
-            csv_object = csv.reader(file)
+        with open(file, 'r') as data_file:
+            csv_object = csv.reader(data_file)
             csv_data = list(csv_object)
         return csv_data
-    except IOError:
-        input(f'\n FILE NOT FOUND: {data_file} ')
+    except FileNotFoundError as err:
+        message1 = f'\n\n FILE NOT FOUND: {file}.'
+        message2 = f' Press ENTER to exit.\n\n'
+        logger.exception(err)
+        logger.info(message1)
+        input(message2)
         exit()
-    except UnicodeDecodeError:
-        input(f'\n WRONG FILE FORMAT (NOT CSV). FILE CAN\'T BE DECODED: {data_file} ')
+    except UnicodeDecodeError as err:
+        message1 = f'\n WRONG FILE FORMAT (NOT CSV). FILE CAN\'T BE DECODED: {file}'
+        message2 = f' Press ENTER to exit.\n\n'
+        logger.exception(err)
+        logger.info(message1)
+        input(message2)
         exit()
 #-------------------------------------------------------------------------
 
 
-# ------------------   create items dictionary {item_number: {'title': title, 'blocked': blocked}}
+#-------------------------------------------------------------------------
+def fn_save_csv(data, file): 
+    '''\nsaves data from a list to a csv file\n'''
+    try:
+        with open (file, 'w', newline='') as outputfile:
+            content = csv.writer(outputfile)
+            for line in data:
+                content.writerow(line)
+    except:
+        input(f'\n ERROR SAVING FILE: {file} ')
+        exit()
+#-------------------------------------------------------------------------
 
-# ----- open unknows file and get the data
-unknown_items_data = fn_open_csv('output_unknown_items.csv')
-unknown_items_headers = unknown_items_data[0]
-unknown_items = unknown_items_data[1:]
 
-# print('\n')
-# for num in range(3):
-#     print(unknown_items_data[num])
 
-# ----- open scanned data file and get the data with extra details like the time of scan
-scanned_items_data = fn_open_csv('item_by_stocktake_count_by_date_and_time_merged.csv')
-scanned_items_headers = scanned_items_data[0] # headers only
-scanned_items = scanned_items_data[1:] # data without headers - items only
+unknowns_file = 'output_unknown_items.csv'
+scan_data_file = 'item_by_stocktake_count_by_date_and_time_merged.csv'
+identified_items_file = 'output_matched_items.csv'
 
-# print('\n')
-# for num in range(3):
-#     print(scanned_items_data[num])
+identified_items_data = fn_open_csv(identified_items_file)[1:]
+identified_items_dict = {item[0]: item[2] for item in identified_items_data}
 
-count = 0
+scan_data = fn_open_csv(scan_data_file)[1:]
+# logger.info('\n\n')
+# for i in range(2):
+#     logger.info(scan_data[i])
 
-data_by_location = []
-processed_locations = []
+unknowns_data = fn_open_csv(unknowns_file)[1:]
+unknowns_data = sorted(unknowns_data, key=lambda item: item[3]) # sorts data using location as the key
 
-item_count = 0
+item_count = 1
+for row in unknowns_data:
 
-for item in unknown_items:
-    item_count += 1
+    item_number = row[0]
+    location = row[3]
+    quantity = row[4]
+    scan_file = row[7]
+    
+    # location_content = []
+    # num_in_location = 1
+    # logger.info(f'\n location: {location} - scanned No: {item_number} - QTY: {quantity} - file: {scan_file}')
+
+    # for line in scan_data:
+    #     line_item_no = line[0]
+    #     # line_quantity = line[2]
+    #     line_scan_time = line[4]
+    #     scan_data_location = line[1]
+    #     scan_data_file = line[5]
+
+    #     if location == scan_data_location and scan_file == scan_data_file:
+    #         # location_content.append([num_in_location] + line)
+    #         # location_content.append([num_in_location, line_item_no, line_quantity, line_scan_time])
+    #         location_content.append([num_in_location, line_item_no, line_scan_time])
+    #         # location_content.append(f'{num_in_location}. Item: {line_item_no}. QTY: {line_quantity}. Scan time: {line_scan_time}')
+
+    #         num_in_location += 1
+    
+    # logger.info(f' location length: {len(location_content)}')
+
+    # for line in location_content:
+    #     logger.info(f'{line[0]}. Item: {line[1]}. Scanned: {line[2]}')
+
+    
+
+    # merged location
     location_content = []
-    scanned_number = item[0]
-    print(f'\n PROCESSING ITEM {item_count}: {scanned_number}')
-    location = item[3]
+    num_in_location = 1
+    # logger.info('\n\nmerged location')
+    # logger.info(f'\n\nlocation: {location} -> scanned No: {item_number} -> QTY: {quantity} -> file: {scan_file}')
+    logger.info(f'\n\n{item_count}. location: {location}, unknown item: {item_number}, scan file: {scan_file}')
 
-    # there could be more than 1 unknown in one location so this condition skips the location if it was already processed
-    if location in processed_locations:
-        continue
-    else:
-        processed_locations.append(location)
-    # print(f' unknown item -> scanned number: {scanned_number}, location: {location}')
+    previous_item = None
+    next_item = None
 
-    # get all the items in the current location
-    for item in scanned_items:
-        if location in item:
-            processed_locations.append(location)
-            location_content.append(item)
+    for line in scan_data:
+        line_item_no = line[0]
+        # line_quantity = line[2]
+        line_scan_time = line[4]
+        item_no = line[0]
+        scan_data_location = line[1]
+        scan_data_file = line[5]
 
-    # print('  -> location content:')
-    # for item in location_content:
-    #     print(' ', item)
+        if item_no == previous_item:
+            previous_item = item_no
+            continue
 
-    # print('')
+        if location == scan_data_location and scan_file == scan_data_file:
+            # location_content.append([num_in_location] + line)
+            # location_content.append([num_in_location, line_item_no, line_quantity, line_scan_time])
+            location_content.append([num_in_location, line_item_no, line_scan_time])
 
-    data_by_location.append([int(location), location_content])
-    # break
+            num_in_location += 1
 
-# print(data_by_location_dictionary)
-
-with open('unknowns_extra_details_full.txt', 'w') as file:
-    file.write('')
-
-with open('unknowns_extra_details_for_printing.txt', 'w') as file:
-    file.write('')
-
-data_to_write = ''
-data_to_print = ''
-
-# -- create a dictionary of identified item from matched titles file
-matched_items_dict = {x[0]: x[2] for x in fn_open_csv('output_matched_items.csv')}
-
-
-for item in sorted(data_by_location):
-    location1 = item[0]
-    data1 = item[1]
-    # print(location1)
-    # print(data1)
-
-    line_number = 0
+        previous_item = item_no
     
-    
-    # data_to_write += f'location {location1}\n'
-    # data_to_write += f'Time       Item No.        Title\n'
+    # previous_item = None
+    # logger.info(f'location length: {len(location_content)}')
 
-    new_data = [data1[0]]
+    data = []
 
-    for line in data1[1:]:
-    # line -> ['9781570758706', '33039', '1', '2020-02-27', '09:56:49']
-        if line[0] == new_data[-1][0]:  # if previous line has the same item number it is overriten
-            new_data[-1] = line
-        elif line[0] != new_data[-1][0]:
-            new_data.append(line)
+    for i in range(len(location_content)):
+
+        line = location_content[i]
+        
+        if line[1] == item_number:
+            unknown_item = line
             
-    for line in new_data:
-        # line -> ['9780745962719', '330899', '7', '2020-02-27', '14:48:58']
-        time_of_scan1 = line[4]
-        scanned_item_number1 = line[0]
-        quantity1 = line[2]
-        line_number += 1
-
-        title1 = matched_items_dict[scanned_item_number1.lower()]
-        if title1 == 'UNKNOWN':
-            title1 = '----------  UNKNOWN  ----------'
-
-            # ----------------- short version for printing
-            line_index = line_number - 1
-
+            # previous item
             try:
-                if line_index == 0: 
-                    line_before = None
-                else:
-                    line_before = new_data[line_index - 1]
-            except:
-                line_before = None
+                previous_item = location_content[i-1]
 
+                if i == 0:
+                    previous_item = []
+            except:
+                previous_item = ['?????', '?????', '?????']
+            # next item
             try:
-                line_after = new_data[line_index + 1]
+                next_item = location_content[i+1]
+
             except:
-                line_after = None
+                next_item = ['?????', '?????', '?????']
 
-            data_for_printing = [line_before, new_data[line_index], line_after]
+                if i == len(location_content) - 1:
+                    next_item = [] 
 
-            for line2 in data_for_printing:
-                 # line -> ['9780745962719', '330899', '7', '2020-02-27', '14:48:58']
-                
-                if line2 == None:
-                    continue
-                else:
-                    time_of_scan2 = line2[4]
-                    scanned_item_number2 = line2[0]
-                    quantity2 = line2[2]
+            data = [previous_item, unknown_item, next_item]
 
-                    title2 = matched_items_dict[scanned_item_number2.lower()]
+            for item in data:
 
-                    if len(title2) > 45:
-                        title2 = title2[:45]
-                    if title2 == 'UNKNOWN':
-                        title2 = '----------  UNKNOWN  ----------'
+                try:
+                    title = identified_items_dict[item[1]][0:30]
+                    if title == 'UNKNOWN' and item[1] != item_number:
+                        title = '???????????????'
+                    elif title == 'UNKNOWN' and item[1] == item_number:
+                        title = '-----  UNKNOWN  -----'
+                except:
+                    title = '???????????????'
 
-                    message2 = f'loc. {location1} - item {scanned_item_number2} - {title2}'
-                    data_to_print += message2 + '\n'
+                if item:
+                    # logger.info(f'  {item[0]}. Item: {item[1]}. Title: {title}. Scanned: {item[2]}')
+                    logger.info(f'  {item[0]}. Item: {item[1]}. Title: {title}')
 
-            data_to_print += '\n\n'
+            logger.info(f' Item {unknown_item[0]} ({len(location_content) - unknown_item[0] + 1} from the end). Location length: {len(location_content)}')
 
+            break
 
-        message = f'location {location1} - time {time_of_scan1} - item {scanned_item_number1} - {title1}'
-        data_to_write += message + '\n'
-
-    data_to_write += '\n\n'
+    item_count += 1
 
 
-with open('unknowns_extra_details_full.txt', 'a') as file:
-        file.write(data_to_write)
+with open(log_file_path) as file:
+    content = file.read()
 
-with open('unknowns_extra_details_for_printing.txt', 'a') as file:
-        file.write(data_to_print)
-
-# for line in data_to_print:
-#     print(line)
-
-input('\n PRESS ENTER TO EXIT... ')
+with open(log_file_name.replace('log', 'txt'), 'w') as file:
+    file.write(content)
